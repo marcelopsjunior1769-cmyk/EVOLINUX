@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evolinux-evo16"
+version = "0.1.0"
+description = "Controlador nativo experimental Audient EVO 16 para ALSA no Linux"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "EVOLINUX contributors"}]
+license = "GPL-3.0-only"
+license-files = ["LICENSE", "LICENSES/*.txt", "third_party_licenses/*.txt"]
+keywords = ["audient", "evo16", "alsa", "pipewire", "linux"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Multimedia :: Sound/Audio",
+]
+
+[project.urls]
+Repository = "https://github.com/marcelopsjunior1769-cmyk/EVOLINUX"
+
+[project.scripts]
+evolinux = "evolinux.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+include-package-data = false
