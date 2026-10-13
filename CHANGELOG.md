@@ -1,5 +1,13 @@
 # Histórico de alterações
 
+## 0.3.0 — prévia e conferência do valor ALSA
+
+- `plan-set` lê o controle selecionado e valida uma proposta de ganho/fase FU11,
+  sem sessão gravável nem execução do ajuste sugerido.
+- `set --expect-current` recusa a alteração se o valor ALSA do alvo mudou antes
+  da escrita; cache do driver e correspondência física continuam limitados.
+- Roteiro de metadados executável no Ubuntu mesmo sem baixar o projeto.
+
 ## 0.2.0 — uso pelo terminal em preparação
 
 - Instalador por usuário para Ubuntu 24.04, com versões isoladas e preservação

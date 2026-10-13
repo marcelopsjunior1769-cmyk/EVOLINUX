@@ -42,6 +42,13 @@ PYTHONPATH=src python3 -m evolinux status --json
 Leia as [instruções completas](docs/installation.md) e os
 [riscos e limites de operação](docs/usb-risks.md) antes de ajustar controles.
 
+Se os fontes ainda não chegaram ao seu Ubuntu, a
+[coleta inicial pelo terminal](docs/bootstrap-diagnostics.md) permite informar
+os controles que o kernel expõe sem instalar este projeto. Com o controlador
+instalado, `plan-set` mostra uma prévia sem escrita pelo aplicativo e sugere
+um ajuste manual condicionado ao valor ALSA conferido. Veja
+[o fluxo de conferência](docs/terminal-controls.md).
+
 ## Componentes implementados
 
 - Descoberta da EVO 16 por `/proc/asound` e metadados do mixer do kernel.
@@ -50,6 +57,8 @@ Leia as [instruções completas](docs/installation.md) e os
 - Backend ALSA CTL para ler controles das unidades 11, 60 e 61 quando expostos
   pelo driver, sem converter valores brutos em dB inventados.
 - Seleção de placa/numid na leitura para limitar o acesso ao controle escolhido.
+- Prévia `plan-set`, sem escrita, e condição `--expect-current` para recusar
+  um ajuste quando o valor ALSA mudou desde a conferência.
 - Caminho de ajuste explícito de ganho/fase FU11, com autorização por operação,
   validação de identidade, tipo, faixa, passo e canal. **Ainda não testado no
   hardware; escritas não acontecem no fluxo padrão.**

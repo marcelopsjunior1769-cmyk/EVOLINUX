@@ -6,6 +6,20 @@ possui a EVO física nem `/proc/asound`.
 
 ## Testes automatizados
 
+### Atualização 0.3.0 — 13 de outubro de 2026
+
+**170 testes passaram, nenhum ignorado**. O backend ALSA passou 46 testes,
+incluindo prévias sem sessão gravável, seleção do controle, faixa/passo,
+respostas inconsistentes e sete cenários de valor esperado antes da escrita.
+A CLI passou 14 testes, incluindo a geração de argumentos que não são
+executados, recusa de prévia inválida e ausência de comando de ajuste para um
+valor que já corresponde ao proposto.
+
+Nenhuma escrita no equipamento ocorreu. As prévias e os ajustes condicionais
+foram exercitados com transportes simulados. A coleta direta de metadados sem
+instalação foi conferida com arquivos temporários, sem acessar hardware.
+A saída real desse procedimento no Ubuntu do usuário continua pendente.
+
 ### Atualização 0.2.0 para uso pelo terminal
 
 O conjunto completo executou **148 testes, todos aprovados**, sem casos

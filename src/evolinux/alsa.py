@@ -540,12 +540,85 @@ class NativeAlsaBackend:
         result["status"] = "partial" if result["errors"] else "found"
         return result
 
-    def set_value(self, card_number, numid, channel_index, value, *, authorized=False):
-        """Change one FU11 array position only with explicit caller authorization."""
+    def plan_value(self, card_number, numid, channel_index, value):
+        """Preview one FU11 adjustment using only the selected read-only snapshot.
+
+        The channel number follows kernel metadata. It does not prove which
+        physical preamplifier is connected to that channel. No write-capable
+        CTL handle, control lock, or write is requested by this method.
+        """
+        if any(type(item) is not int for item in (card_number, numid, channel_index, value)):
+            raise ValueError("preview arguments must be integers")
+        if not (0 <= card_number <= 4095 and 1 <= numid <= 0xffffffff
+                and 0 <= channel_index < MAX_VALUES and 0 <= value <= 65535):
+            raise ValueError("invalid ALSA preview address or value")
+        snapshot = self.snapshot(card_number=card_number, numid=numid)
+        errors = snapshot.get("errors", [])
+        if snapshot.get("status") != "found" or errors:
+            if errors:
+                error = errors[0]
+                code = error.get("errno")
+                code = code if type(code) is int and code > 0 else errno.EIO
+                raise OSError(code, error.get("message") or "ALSA snapshot failed")
+            code = errno.ENODEV if snapshot.get("status") == "absent" else errno.EIO
+            raise OSError(code, "ALSA preview requires a complete selected control snapshot")
+        cards = snapshot.get("cards", [])
+        if (len(cards) != 1 or cards[0].get("card_number") != card_number
+                or len(cards[0].get("controls", [])) != 1):
+            raise OSError(errno.EIO, "ALSA snapshot has no unique selected control")
+        control = cards[0]["controls"][0]
+        if control.get("numid") != numid:
+            raise OSError(errno.EIO, "ALSA snapshot control identity is inconsistent")
+        if (control.get("adjustable") is not True or control.get("unit") != 11
+                or control.get("selector") not in (11, 13)):
+            raise PermissionError(errno.EPERM, "control is not a verified adjustable FU11 control")
+        try:
+            if (any(type(control[key]) is not int for key in ("index", "channel_mask", "count"))
+                    or not isinstance(control["name"], str)
+                    or not 1 <= control["count"] <= MAX_VALUES):
+                raise OSError(errno.EIO, "ALSA snapshot metadata is invalid")
+            mapping = MixerMapping(control["name"], control["index"],
+                                   control["unit"], control["selector"],
+                                   control["channel_mask"], control["count"],
+                                   "S16" if control["selector"] == 11 else "BOOLEAN")
+            if not _adjustable(mapping, control, control["values"]):
+                raise PermissionError(errno.EPERM, "control is not a verified adjustable FU11 control")
+            numbers = mapping.channel_numbers()
+            if control["channel_numbers"] != numbers:
+                raise OSError(errno.EIO, "ALSA snapshot channel metadata is inconsistent")
+            if channel_index >= control["count"]:
+                raise ValueError("channel index is outside the ALSA control")
+            updated = control["values"].copy()
+            updated[channel_index] = value
+            if not _valid_values(control, updated):
+                raise ValueError("value is outside the ALSA range or step")
+        except (KeyError, TypeError, AttributeError) as exception:
+            raise OSError(errno.EIO, "ALSA snapshot metadata is incomplete or invalid") from exception
+        current = control["values"][channel_index]
+        return {"card_number": card_number, "numid": numid,
+                "name": control["name"], "unit": control["unit"],
+                "selector": control["selector"], "count": control["count"],
+                "value_type": control["value_type"], "minimum": control["minimum"],
+                "maximum": control["maximum"], "step": control["step"],
+                "channel_index": channel_index, "channel_position": channel_index + 1,
+                "usb_channel": numbers[channel_index], "current_value": current,
+                "target_value": value, "would_change": current != value,
+                "write_performed": False}
+
+    def set_value(self, card_number, numid, channel_index, value, *, authorized=False,
+                  expected_current=None):
+        """Change one FU11 position with explicit caller authorization.
+
+        If expected_current is supplied, refuse a stale targeted ALSA value
+        immediately before writing. This checks ALSA's latest reported value;
+        it is not an atomic comparison against the physical device state.
+        """
         if authorized is not True:
             raise PermissionError(errno.EPERM, "explicit authorization is required for ALSA writes")
         if any(type(item) is not int for item in (card_number, numid, channel_index, value)):
             raise ValueError("write arguments must be integers")
+        if expected_current is not None and type(expected_current) is not int:
+            raise ValueError("expected current value must be an integer")
         if not (0 <= card_number <= 4095 and 1 <= numid <= 0xffffffff and channel_index >= 0):
             raise ValueError("invalid ALSA write address")
         if self._usb_id(card_number) != USB_ID:
@@ -585,6 +658,8 @@ class NativeAlsaBackend:
                 current = ctl.read(element, info)
                 if not _valid_values(info, current):
                     raise OSError(errno.EAGAIN, "ALSA values changed to an invalid range")
+                if expected_current is not None and current[channel_index] != expected_current:
+                    raise OSError(errno.EAGAIN, "targeted ALSA value differs from the expected current value")
                 changed = current[channel_index] != value
                 if changed:
                     current[channel_index] = value

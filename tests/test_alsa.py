@@ -77,6 +77,7 @@ class FakeCtl:
 
     @contextmanager
     def lock(self, element):
+        self.state["locks"] = self.state.get("locks", 0) + 1
         if self.state["infos"][element.numid]["locked"]:
             raise PermissionError(errno.EBUSY, "control is already locked")
         self.state["locked"] = True
@@ -176,6 +177,137 @@ class BackendTests(unittest.TestCase):
                 self.backend.snapshot(**selection)
         self.assertEqual(self.state["sessions"], [])
 
+    def test_plan_reads_one_selected_control_without_locks_or_writes(self):
+        with patch.object(self.backend, "set_value", side_effect=AssertionError("must not set")):
+            result = self.backend.plan_value(3, 7, 2, 40)
+        self.assertEqual(result, {
+            "card_number": 3, "numid": 7, "name": "Input Gain Control",
+            "unit": 11, "selector": 11, "count": 16, "value_type": "integer",
+            "minimum": 0, "maximum": 100, "step": 1,
+            "channel_index": 2, "channel_position": 3, "usb_channel": 3,
+            "current_value": 12, "target_value": 40, "would_change": True,
+            "write_performed": False})
+        self.assertEqual(self.state["reads"], [7])
+        self.assertTrue(all(session.readonly for session in self.state["sessions"]))
+        self.assertEqual(self.state["writes"], [])
+        self.assertEqual(self.state.get("locks", 0), 0)
+        self.assertEqual(self.state["values"][7], list(range(10, 26)))
+        self.assertEqual(self.state["open"], 0)
+
+    def test_plan_noop_still_reports_a_read_only_preview(self):
+        result = self.backend.plan_value(3, 7, 0, 10)
+        self.assertFalse(result["would_change"])
+        self.assertFalse(result["write_performed"])
+        self.assertEqual(self.state["reads"], [7])
+        self.assertEqual(self.state["writes"], [])
+        self.assertEqual(self.state.get("locks", 0), 0)
+
+    def test_plan_phase_accepts_only_raw_zero_and_one(self):
+        for value in (0, 1):
+            with self.subTest(value=value):
+                result = self.backend.plan_value(3, 8, 0, value)
+                self.assertEqual(result["value_type"], "boolean")
+                self.assertEqual(result["target_value"], value)
+                self.assertEqual(result["current_value"], 0)
+        with self.assertRaises(ValueError):
+            self.backend.plan_value(3, 8, 0, 2)
+        self.assertEqual(self.state["writes"], [])
+        self.assertEqual(self.state.get("locks", 0), 0)
+
+    def test_plan_invalid_arguments_fail_before_any_discovery(self):
+        cases = ((True, 7, 0, 10), (-1, 7, 0, 10), (4096, 7, 0, 10),
+                 (3, False, 0, 10), (3, 0, 0, 10), (3, 2**32, 0, 10),
+                 (3, 7, False, 10), (3, 7, -1, 10), (3, 7, 128, 10),
+                 (3, 7, 0, True), (3, 7, 0, -1), (3, 7, 0, 65536),
+                 (3, 7, 0, "10"), (3, 7, 0, 10.0))
+        with patch.object(self.backend, "snapshot", side_effect=AssertionError("must not discover")):
+            for case in cases:
+                with self.subTest(case=case), self.assertRaises(ValueError):
+                    self.backend.plan_value(*case)
+        self.assertEqual(self.state["sessions"], [])
+
+    def test_plan_rejects_matrix_controls(self):
+        with self.assertRaises(PermissionError) as raised:
+            self.backend.plan_value(3, 9, 0, 20)
+        self.assertEqual(raised.exception.errno, errno.EPERM)
+        self.assertEqual(self.state["reads"], [9])
+        self.assertEqual(self.state["writes"], [])
+        self.assertEqual(self.state.get("locks", 0), 0)
+
+    def test_plan_refuses_failed_read_and_preserves_errno(self):
+        self.state["read_errors"] = {7: OSError(errno.ETIMEDOUT, "control timed out")}
+        with self.assertRaises(OSError) as raised:
+            self.backend.plan_value(3, 7, 0, 20)
+        self.assertEqual(raised.exception.errno, errno.ETIMEDOUT)
+        self.assertEqual(self.state["writes"], [])
+        self.assertEqual(self.state.get("locks", 0), 0)
+        self.assertEqual(self.state["open"], 0)
+
+    def test_plan_absent_unavailable_or_incomplete_status_refuses(self):
+        cases = (({"status": "absent", "cards": [], "errors": []}, errno.ENODEV),
+                 ({"status": "unavailable", "cards": [], "errors": [
+                     {"errno": errno.ENOENT, "message": "no ALSA tree"}]}, errno.ENOENT),
+                 ({"status": "partial", "cards": [], "errors": []}, errno.EIO),
+                 ({"status": "found", "cards": [], "errors": [
+                     {"errno": errno.EBUSY, "message": "busy"}]}, errno.EBUSY),
+                 ({"status": "unavailable", "cards": [], "errors": [
+                     {"errno": None, "message": "missing libasound"}]}, errno.EIO))
+        for snapshot, code in cases:
+            with self.subTest(snapshot=snapshot):
+                with patch.object(self.backend, "snapshot", return_value=snapshot):
+                    with self.assertRaises(OSError) as raised:
+                        self.backend.plan_value(3, 7, 0, 20)
+                self.assertEqual(raised.exception.errno, code)
+        self.assertEqual(self.state["sessions"], [])
+
+    def test_plan_requires_exactly_the_requested_card_and_control(self):
+        snapshot = self.backend.snapshot(card_number=3, numid=7)
+        variants = ([], snapshot["cards"] * 2,
+                    [{"card_number": 4, "controls": snapshot["cards"][0]["controls"]}],
+                    [{"card_number": 3, "controls": []}],
+                    [{"card_number": 3, "controls": snapshot["cards"][0]["controls"] * 2}],
+                    [{"card_number": 3, "controls": [{"numid": 8}]}])
+        for cards in variants:
+            with self.subTest(cards=cards), patch.object(self.backend, "snapshot", return_value={
+                    "status": "found", "cards": cards, "errors": []}):
+                with self.assertRaises(OSError) as raised:
+                    self.backend.plan_value(3, 7, 0, 20)
+                self.assertEqual(raised.exception.errno, errno.EIO)
+        self.assertEqual(self.state["writes"], [])
+
+    def test_plan_bounds_and_step_follow_the_selected_control(self):
+        with self.assertRaises(ValueError):
+            self.backend.plan_value(3, 7, 16, 20)
+        with self.assertRaises(ValueError):
+            self.backend.plan_value(3, 7, 0, 101)
+        self.state["infos"][7]["step"] = 2
+        self.state["values"][7] = [10] * 16
+        with self.assertRaises(ValueError):
+            self.backend.plan_value(3, 7, 0, 11)
+        self.state["infos"][7]["step"] = 0
+        self.assertEqual(self.backend.plan_value(3, 7, 0, 11)["target_value"], 11)
+        self.assertEqual(self.state["writes"], [])
+
+    def test_plan_refuses_invalid_or_incomplete_control_data(self):
+        snapshot = self.backend.snapshot(card_number=3, numid=7)
+        control = snapshot["cards"][0]["controls"][0]
+        variants = ({"values": None}, {"values": [True] * 16}, {"count": None},
+                    {"channel_numbers": list(range(2, 18))}, {"step": "1"},
+                    {"value_type": "integer64"}, {"readable": False})
+        for variant in variants:
+            with self.subTest(variant=variant):
+                changed = dict(control, **variant)
+                with patch.object(self.backend, "snapshot", return_value={"status": "found",
+                        "errors": [], "cards": [{"card_number": 3, "controls": [changed]}]}):
+                    with self.assertRaises(OSError):
+                        self.backend.plan_value(3, 7, 0, 20)
+        del control["values"]
+        with patch.object(self.backend, "snapshot", return_value=snapshot):
+            with self.assertRaises(OSError) as raised:
+                self.backend.plan_value(3, 7, 0, 20)
+        self.assertEqual(raised.exception.errno, errno.EIO)
+        self.assertEqual(self.state["writes"], [])
+
     def test_missing_native_library_is_unavailable_even_with_known_card(self):
         with patch("evolinux.alsa.ctypes.CDLL", side_effect=OSError("missing libasound")):
             result = NativeAlsaBackend(self.root).snapshot()
@@ -241,6 +373,78 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(self.state["writes"][1][1], [1, 1] + [0, 1] * 7)
         self.assertEqual(self.state["open"], 0)
         self.assertFalse(self.state["locked"])
+
+    def test_expected_current_type_is_checked_before_discovery(self):
+        with patch.object(self.backend, "_usb_id", side_effect=AssertionError("must not discover")):
+            for expected in (True, False, "10", 10.0, [], {}):
+                with self.subTest(expected=expected), self.assertRaises(ValueError):
+                    self.backend.set_value(3, 7, 0, 20, authorized=True,
+                                           expected_current=expected)
+        self.assertEqual(self.state["sessions"], [])
+
+    def test_expected_current_does_not_grant_write_authorization(self):
+        with patch.object(self.backend, "_usb_id", side_effect=AssertionError("must not discover")):
+            with self.assertRaises(PermissionError) as raised:
+                self.backend.set_value(3, 7, 0, 20, expected_current=10)
+        self.assertEqual(raised.exception.errno, errno.EPERM)
+        self.assertEqual(self.state["sessions"], [])
+
+    def test_stale_expected_current_refuses_even_when_target_is_noop(self):
+        for target in (10, 30):
+            with self.subTest(target=target), self.assertRaises(OSError) as raised:
+                self.backend.set_value(3, 7, 0, target, authorized=True, expected_current=9)
+            self.assertEqual(raised.exception.errno, errno.EAGAIN)
+            self.assertEqual(self.state["writes"], [])
+            self.assertEqual(self.state["values"][7][0], 10)
+            self.assertEqual(self.state["open"], 0)
+            self.assertFalse(self.state["locked"])
+
+    def test_expected_current_is_checked_against_final_read(self):
+        reads = []
+        def update(element):
+            reads.append(element.numid)
+            if len(reads) == 2:
+                self.state["values"][7][0] = 30
+        self.state["read_callback"] = update
+        with self.assertRaises(OSError) as raised:
+            self.backend.set_value(3, 7, 0, 40, authorized=True, expected_current=10)
+        self.assertEqual(raised.exception.errno, errno.EAGAIN)
+        self.assertEqual(self.state["reads"], [7, 7])
+        self.assertEqual(self.state["writes"], [])
+        self.assertEqual(self.state["values"][7][0], 30)
+        self.assertEqual(self.state["open"], 0)
+        self.assertFalse(self.state["locked"])
+
+    def test_matching_current_guard_preserves_other_fresh_channels(self):
+        reads = []
+        def update(element):
+            reads.append(element.numid)
+            if len(reads) == 2:
+                self.state["values"][7][1] = 70
+        self.state["read_callback"] = update
+        result = self.backend.set_value(3, 7, 0, 30, authorized=True, expected_current=10)
+        self.assertTrue(result["changed"])
+        self.assertEqual(self.state["writes"], [(7, [30, 70] + list(range(12, 26)))])
+        self.assertEqual(result["values"], [30, 70] + list(range(12, 26)))
+        self.assertEqual(self.state["open"], 0)
+        self.assertFalse(self.state["locked"])
+
+    def test_matching_current_guard_noop_does_not_write(self):
+        result = self.backend.set_value(3, 7, 0, 10, authorized=True, expected_current=10)
+        self.assertFalse(result["changed"])
+        self.assertEqual(self.state["reads"], [7, 7])
+        self.assertEqual(self.state["writes"], [])
+        self.assertEqual(self.state["open"], 0)
+        self.assertFalse(self.state["locked"])
+
+    def test_guarded_phase_update_keeps_boolean_values(self):
+        result = self.backend.set_value(3, 8, 0, 1, authorized=True, expected_current=0)
+        self.assertTrue(result["changed"])
+        self.assertEqual(result["values"], [1, 1] + [0, 1] * 7)
+        with self.assertRaises(OSError) as raised:
+            self.backend.set_value(3, 8, 0, 0, authorized=True, expected_current=0)
+        self.assertEqual(raised.exception.errno, errno.EAGAIN)
+        self.assertEqual(len(self.state["writes"]), 1)
 
     def test_readback_failure_is_not_reported_as_applied(self):
         self.state["ignore_write"] = True

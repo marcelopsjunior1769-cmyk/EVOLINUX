@@ -31,6 +31,16 @@ Nenhuma dessas verificações prova continuidade do áudio sem teste físico.
 
 ## Condições para uma alteração padrão
 
+`plan-set` usa uma leitura seletiva para validar uma proposta, sem abrir sessão
+gravável ou chamar a escrita do aplicativo. Ele compartilha os limites da
+leitura ALSA descritos acima. O comando sugerido precisa ser executado
+manualmente após a correspondência física estar validada.
+
+`--expect-current` recusa o ajuste se o valor ALSA do alvo não for mais o que
+foi conferido. Essa condição não é uma comparação atômica no hardware e não
+torna a identificação de uma prévia válida após reconexão ou renumeração.
+Refaça a prévia quando a placa ou sua configuração mudar.
+
 Antes de qualquer ajuste, confira placa, nome do controle, numid, canais,
 valores atuais e faixa. O backend revalida isso no mesmo handle CTL, recusa tipos
 ou mapeamentos inconsistentes e conserva as outras posições do vetor. Uma flag

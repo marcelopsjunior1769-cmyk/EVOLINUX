@@ -78,6 +78,11 @@ um pré-requisito obrigatório. Nenhum desses códigos comprova áudio contínuo
 
 ## Ajustes padrão ALSA
 
+O fluxo recomendado começa com a prévia `plan-set`, que não executa a escrita
+e apresenta os limites e o valor ALSA atual. Se a operação estiver validada,
+ela sugere um comando manual com autorização e `--expect-current`. Veja
+[a conferência de controles pelo terminal](terminal-controls.md).
+
 O comando `set` existe para uma operação manual e explícita, depois de conferir
 os controles e sua faixa no resultado de `status`. Seus argumentos incluem o
 numid ALSA, a posição 1–N no vetor de valores e um **inteiro ALSA**, não um ganho

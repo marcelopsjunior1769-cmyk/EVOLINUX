@@ -5,6 +5,10 @@ durante o uso normal do áudio. O diagnóstico não confirma sozinho que o mixer
 está completo nem que o áudio permanece contínuo: isso exige observação no seu
 Ubuntu com a EVO 16 conectada.
 
+Se os fontes ainda não estiverem disponíveis no computador, faça primeiro a
+[coleta direta de metadados](bootstrap-diagnostics.md). Esse passo não depende
+de instalar o controlador.
+
 ## Verificação inicial sem abrir controles
 
 Após seguir [o instalador por usuário](ubuntu-installer.md), execute:
@@ -84,3 +88,7 @@ Esta primeira etapa não executa ajustes de ganho, fase, phantom, roteamento,
 clock ou matrizes. Não carrega módulos experimentais nem utiliza DFU. Os
 comandos de pesquisa USB continuam sujeitos a validação e autorização
 específica conforme [a documentação de riscos](usb-risks.md).
+
+Depois dessa identificação, o fluxo para conferir uma possível mudança está
+em [terminal-controls.md](terminal-controls.md). A prévia também é uma leitura
+ALSA CTL; nenhuma escrita física foi validada nesta sessão.

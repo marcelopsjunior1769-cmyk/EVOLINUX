@@ -12,6 +12,7 @@ com a interface física nesta sessão.
 | Leitura ALSA das unidades 11/60/61 | Implementado para controles mapeados | Testes de binding e transporte simulado | Controles efetivamente expostos pelo driver |
 | Leitura restrita a placa/controle | Implementado com `status --card --control` | Recusa de seleções inválidas e ausência de leituras em outros controles | Numids do firmware do usuário |
 | Ganho/fase FU11 pelo ALSA | Caminho de ajuste explícito com limites | Testes simulados; padrão sem escrita | Correspondência física e teste autorizado |
+| Prévia e condição do valor atual | `plan-set` e `set --expect-current` implementados | Leitura seletiva, faixa/canal, valores desatualizados e ausência de escrita simulados | Validar canais/estado no hardware; cache ALSA não é medição física |
 | Matrizes 60/61 | Leitura quando expostas; escrita bloqueada | Topologia analisada, testes de metadados | Mapear entradas/saídas e validar valores |
 | Coletor sysfs | Implementado | Fixtures, privacidade e preservação de arquivos | Relatório completo do hardware |
 | CUR/RANGE UAC2 | Builder e decoder implementados | Endereços, limites, dados malformados e erros | Leituras físicas autorizadas |

@@ -4,6 +4,7 @@
 
 import argparse
 import json
+import shlex
 import sys
 
 from .alsa import NativeAlsaBackend
@@ -28,10 +29,15 @@ def parser():
     doctor.add_argument("--controls", action="store_true",
                         help="incluir uma leitura padrão dos controles ALSA")
     change = commands.add_parser("set", help="ajuste explícito de ganho/fase pelo ALSA")
-    change.add_argument("--card", type=int, required=True)
-    change.add_argument("--control", type=int, required=True, help="numid ALSA")
-    change.add_argument("--channel", type=int, required=True, help="posição 1–N no controle ALSA")
-    change.add_argument("--value", type=int, required=True, help="valor inteiro ALSA, não dB")
+    preview = commands.add_parser("plan-set", help="conferir um ajuste sem escrever no controle")
+    for command in (change, preview):
+        command.add_argument("--card", type=int, required=True)
+        command.add_argument("--control", type=int, required=True, help="numid ALSA")
+        command.add_argument("--channel", type=int, required=True, help="posição 1–N no controle ALSA")
+        command.add_argument("--value", type=int, required=True, help="valor inteiro ALSA, não dB")
+    preview.add_argument("--json", action="store_true", help="prévia estruturada")
+    change.add_argument("--expect-current", type=int,
+                        help="recusar se o valor ALSA atual diferir do valor conferido")
     change.add_argument("--authorize-alsa-write", action="store_true",
                         help="autorizar este ajuste padrão após conferir o controle e a faixa")
     return result
@@ -78,21 +84,33 @@ def main(argv=None):
         else:
             _print_health(report)
         return {"ready": 0, "warnings": 2}.get(report["status"], 1)
-    if args.command == "set":
+    if args.command in ("set", "plan-set"):
         # Refuse before discovery or opening an ALSA handle when authorization
         # is absent. No private USB or kernel-module write path exists here.
-        if not args.authorize_alsa_write:
+        if args.command == "set" and not args.authorize_alsa_write:
             arguments.error("ajustes exigem --authorize-alsa-write")
-        if args.card < 0 or args.control < 1 or args.channel < 1:
+        if not 0 <= args.card <= 4095 or not 1 <= args.control <= 0xffffffff or args.channel < 1:
             arguments.error("placa, controle ou canal inválido")
         try:
-            result = NativeAlsaBackend().set_value(
-                args.card, args.control, args.channel - 1, args.value,
-                authorized=True)
+            backend = NativeAlsaBackend()
+            if args.command == "plan-set":
+                result = backend.plan_value(args.card, args.control, args.channel - 1, args.value)
+                result["apply_arguments"] = ["evolinux", "set", "--card", str(args.card),
+                    "--control", str(args.control), "--channel", str(args.channel),
+                    "--value", str(args.value), "--expect-current", str(result["current_value"]),
+                    "--authorize-alsa-write"]
+            else:
+                options = {"authorized": True}
+                if args.expect_current is not None:
+                    options["expected_current"] = args.expect_current
+                result = backend.set_value(args.card, args.control, args.channel - 1, args.value, **options)
         except (OSError, ValueError, PermissionError, RuntimeError) as exc:
-            print("Ajuste recusado: {}".format(exc), file=sys.stderr)
+            print("{} recusado: {}".format("Prévia" if args.command == "plan-set" else "Ajuste", exc), file=sys.stderr)
             return 1
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if args.command == "plan-set" and not args.json:
+            _print_plan(result)
+        else:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     if args.card is not None and not 0 <= args.card <= 4095:
         arguments.error("--card deve estar entre 0 e 4095")
@@ -128,3 +146,17 @@ def _print_health(report):
     if report["status"] == "ready":
         print("O software está preparado para um teste local. A continuidade do áudio precisa ser observada.")
     print("Use doctor --json para o relatório completo.")
+
+
+def _print_plan(result):
+    print("Prévia concluída; o aplicativo não escreveu no controle.")
+    print("Placa {} · controle {} · {} · posição {}".format(
+        result["card_number"], result["numid"], result["name"], result["channel_position"]))
+    print("Valor ALSA atual: {}; proposto: {}; faixa: {} a {}; passo: {}".format(
+        result["current_value"], result["target_value"], result["minimum"], result["maximum"], result["step"]))
+    print("Valores inteiros ALSA, não dB. A correspondência com o canal físico precisa estar confirmada.")
+    if result["would_change"]:
+        print("Após conferir o controle, o ajuste exige executar manualmente:")
+        print(shlex.join(result["apply_arguments"]))
+    else:
+        print("O controle já informa o valor proposto; nenhum ajuste é necessário.")

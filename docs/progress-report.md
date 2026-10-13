@@ -32,6 +32,12 @@ pré-requisitos, kernel, metadados ALSA e serviços de áudio. O instalador não
 abre dispositivos e preserva versões anteriores. O rascunho de GUI foi
 preservado fora do runtime, em vez de entrar nesta entrega.
 
+Em 0.3.0, `plan-set` valida uma proposta por leitura do controle selecionado,
+sem executar o ajuste. `set --expect-current` permite recusar um valor ALSA
+que mudou desde a conferência. O diagnóstico direto de `/proc/asound` foi
+documentado para obter os metadados do Ubuntu mesmo sem baixar os fontes;
+nenhum número de série ou nome de placa é solicitado por esse roteiro.
+
 | Componente | Arquivos | Estado |
 | --- | --- | --- |
 | Backend nativo ALSA CTL | `src/evolinux/alsa.py` | Descoberta, snapshot e ajuste explícito de ganho/fase; testes com transporte simulado |
