@@ -142,6 +142,80 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(result["status"], "found")
         self.assertEqual(result["cards"][0]["controls"][0]["channel_numbers"], list(range(1, 25)))
 
+    def test_binary_gain_range_remains_readable_but_cannot_be_adjusted(self):
+        self.state["infos"][7] = information(16, maximum=1, step=0)
+        self.state["values"][7] = [0] * 16
+        result = self.backend.snapshot()
+        self.assertEqual(result["status"], "found")
+        self.assertEqual(result["errors"], [])
+        gain, phase, matrix = result["cards"][0]["controls"]
+        self.assertEqual(gain["values"], [0] * 16)
+        self.assertEqual((gain["minimum"], gain["maximum"], gain["step"]), (0, 1, 0))
+        self.assertFalse(gain["adjustable"])
+        self.assertEqual(gain["adjustment_block_reason"], "gain_range_not_validated")
+        self.assertTrue(phase["adjustable"])
+        self.assertNotIn("adjustment_block_reason", phase)
+        self.assertNotIn("adjustment_block_reason", matrix)
+        self.assertEqual(self.state["reads"], [7, 8, 9])
+        self.assertTrue(all(session.readonly for session in self.state["sessions"]))
+        self.assertEqual(self.state["writes"], [])
+        self.assertEqual(self.state.get("locks", 0), 0)
+        self.assertEqual(self.state["open"], 0)
+
+    def test_binary_gain_range_refuses_preview_even_for_noop(self):
+        self.state["infos"][7] = information(16, maximum=1, step=0)
+        self.state["values"][7] = [0] * 16
+        for value in (0, 1):
+            with self.subTest(value=value), self.assertRaises(PermissionError) as raised:
+                self.backend.plan_value(3, 7, 0, value)
+            self.assertEqual(raised.exception.errno, errno.EPERM)
+        self.assertEqual(self.state["reads"], [7, 7])
+        self.assertTrue(all(session.readonly for session in self.state["sessions"]))
+        self.assertEqual(self.state["writes"], [])
+        self.assertEqual(self.state.get("locks", 0), 0)
+        self.assertEqual(self.state["open"], 0)
+
+    def test_binary_gain_range_refuses_authorized_write_even_for_noop(self):
+        self.state["infos"][7] = information(16, maximum=1, step=0)
+        self.state["values"][7] = [0] * 16
+        for value in (0, 1):
+            with self.subTest(value=value), self.assertRaises(PermissionError) as raised:
+                self.backend.set_value(3, 7, 0, value, authorized=True)
+            self.assertEqual(raised.exception.errno, errno.EPERM)
+            self.assertEqual(self.state["writes"], [])
+            self.assertEqual(self.state["values"][7], [0] * 16)
+            self.assertEqual(self.state["open"], 0)
+            self.assertFalse(self.state["locked"])
+
+    def test_gain_range_wider_than_binary_preserves_preview_and_explicit_write(self):
+        self.state["infos"][7] = information(16, maximum=2, step=0)
+        self.state["values"][7] = [0] * 16
+        control = self.backend.snapshot(card_number=3, numid=7)["cards"][0]["controls"][0]
+        self.assertTrue(control["adjustable"])
+        self.assertNotIn("adjustment_block_reason", control)
+        preview = self.backend.plan_value(3, 7, 0, 1)
+        self.assertEqual(preview["target_value"], 1)
+        self.assertFalse(preview["write_performed"])
+        self.assertEqual(self.state["writes"], [])
+        result = self.backend.set_value(3, 7, 0, 1, authorized=True, expected_current=0)
+        self.assertTrue(result["changed"])
+        self.assertEqual(self.state["writes"], [(7, [1] + [0] * 15)])
+        self.assertEqual(self.state["open"], 0)
+        self.assertFalse(self.state["locked"])
+
+    def test_gain_block_reason_is_not_claimed_for_failed_or_inconsistent_reads(self):
+        self.state["infos"][7] = information(16, maximum=1, step=0)
+        self.state["values"][7] = [0] * 16
+        self.state["read_errors"] = {7: OSError(errno.EIO, "gain read failed")}
+        control = self.backend.snapshot(card_number=3, numid=7)["cards"][0]["controls"][0]
+        self.assertNotIn("adjustment_block_reason", control)
+        self.assertIsNone(control["values"])
+        self.state.pop("read_errors")
+        self.state["infos"][7]["count"] = 15
+        control = self.backend.snapshot(card_number=3, numid=7)["cards"][0]["controls"][0]
+        self.assertNotIn("adjustment_block_reason", control)
+        self.assertIsNone(control["values"])
+
     def test_absent_and_unavailable_are_distinct(self):
         (self.card / "usbid").write_text("1234:5678\n")
         self.assertEqual(self.backend.snapshot(), {"status": "absent", "cards": [], "errors": []})

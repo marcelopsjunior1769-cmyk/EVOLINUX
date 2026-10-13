@@ -21,6 +21,17 @@ A revisão USB `bcdDevice` não é necessariamente a versão de firmware.
 Existência e geometria não comprovam o efeito físico de um controle ou a
 semântica de um comando privado. Veja [a análise dos descritores](device-topology.pt-BR.md).
 
+No [inventário ALSA recebido do Ubuntu do usuário](observed-alsa-profile.md),
+FU11 publica 16 posições de ganho e 16 de fase, apesar da máscara de 24 bits.
+Os mixers publicam entradas 1–24, com 6 e 4 saídas respectivamente. Esses
+limites efetivos não substituem a geometria anunciada nos descritores; o
+backend usa os controles presentes no mapeamento do driver. A lista ALSA de
+nomes/índices/numids e as linhas `Control:` de `usbmixer` já confirmaram o
+vínculo às entidades/entradas. O ganho FU11, numid 1, foi lido por `amixer`:
+16 valores zero, faixa inteira 0–1 e passo 0. A fase FU11, numid 2, também foi
+lida: BOOLEAN com 16 posições `off`. Valores/faixas das matrizes, efeitos
+físicos e continuidade do áudio permanecem pendentes.
+
 ## Endereçamento padrão
 
 Para leituras class/interface, o setup packet usa `bmRequestType=0xa1`. Em UAC2,
@@ -47,6 +58,14 @@ MIN/MAX/RES; o decoder recusa contagens, comprimentos e intervalos inconsistente
 depois usa a API CTL de `libasound`. Só controles ligados às unidades conhecidas
 são considerados. Tipo, quantidade de valores, máscaras, identidade e faixa são
 validados; ausência e falhas são expostas como tais.
+
+O ganho FU11 com faixa 0–1 permanece legível, mas seu ajuste é bloqueado como
+`gain_range_not_validated`. Essa faixa de dois valores não valida a escala de
+ganho; não há evidência suficiente para atribuí-la a falha de RANGE, firmware
+ou uma unidade física específica. Para inversão de polaridade BOOLEAN, o
+intervalo esperado 0–1 tem outra semântica e é tratado separadamente. A leitura
+ALSA das 16 posições `off` foi recebida; correspondência física e efeito de
+alterar fase não foram testados.
 
 Esse caminho mantém o driver `snd-usb-audio` responsável pela interface. O
 aplicativo não abre PCM nem solicita restart do PipeWire. A atividade interna

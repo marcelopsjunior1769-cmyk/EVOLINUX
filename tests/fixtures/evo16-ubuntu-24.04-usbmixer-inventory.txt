@@ -1,0 +1,109 @@
+USB Mixer: usb_id=0x2708000a, ctrlif=0, ctlerr=0
+  Unit: 11
+    Info: id=11, control=13, cmask=0xffffff, channels=16, type="BOOLEAN"
+  Unit: 11
+    Info: id=11, control=11, cmask=0xffffff, channels=16, type="S16"
+  Unit: 40
+    Info: id=40, control=1, cmask=0x0, channels=1, type="U8"
+  Unit: 41
+    Info: id=41, control=2, cmask=0x0, channels=1, type="BOOLEAN"
+  Unit: 44
+    Info: id=44, control=2, cmask=0x0, channels=1, type="BOOLEAN"
+  Unit: 45
+    Info: id=45, control=2, cmask=0x0, channels=1, type="BOOLEAN"
+  Unit: 60
+    Info: id=60, control=24, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=23, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=22, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=21, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=20, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=19, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=18, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=17, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=16, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=15, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=14, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=13, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=12, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=11, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=10, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=9, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=8, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=7, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=6, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=5, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=4, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=3, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=2, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Info: id=60, control=1, cmask=0x3f, channels=6, type="S16"
+  Unit: 61
+    Info: id=61, control=24, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=23, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=22, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=21, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=20, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=19, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=18, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=17, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=16, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=15, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=14, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=13, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=12, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=11, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=10, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=9, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=8, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=7, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=6, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=5, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=4, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=3, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=2, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Info: id=61, control=1, cmask=0xf, channels=4, type="S16"

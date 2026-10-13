@@ -10,6 +10,18 @@ usam fixtures e simulam as chamadas ao hardware. Eles não comprovam funcionamen
 do mixer na EVO conectada ao seu computador. O projeto não é um produto oficial
 da Audient nem uma versão convertida do instalador Windows.
 
+O [inventário ALSA recebido do Ubuntu](docs/observed-alsa-profile.md) mostra
+16 posições em cada controle de ganho/fase FU11 e matrizes 24×6/24×4 nas
+unidades 60/61: 50 controles mapeados e 272 posições. Na coleta, ganho/fase usam
+numids 1/2, o mixer 60 usa 3–26 e o mixer 61 usa 27–50. Esses números podem mudar
+após reconectar; as posições ALSA não identificam os canais físicos.
+
+A leitura de ganho pelo `amixer` retornou faixa inteira **0–1**, passo 0 e
+16 zeros. O controlador mantém a leitura, mas bloqueia prévias/ajustes de ganho
+nessa faixa, cuja causa permanece desconhecida. Valores de matrizes, efeitos
+físicos e continuidade do áudio ainda exigem validação. A leitura de fase
+retornou 16 valores BOOLEAN `off`, sem ajuste.
+
 ## Instalação e primeira leitura
 
 Com os fontes disponíveis no seu Ubuntu 24.04.4, entre na pasta do projeto:
@@ -26,17 +38,22 @@ O instalador cria uma versão isolada por usuário e preserva instalações
 anteriores; não precisa de sudo, Wine, interface gráfica ou módulo de kernel.
 O comando `doctor` verifica pré-requisitos, kernel, metadados da EVO e estado
 de PipeWire/WirePlumber. Por padrão, não abre controles ALSA/PCM nem envia
-comandos USB. Veja [o instalador](docs/ubuntu-installer.md) e
+comandos USB. O resumo mostra apenas as posições presentes nos metadados,
+preservando entradas/saídas ausentes. Veja [o instalador](docs/ubuntu-installer.md) e
 [o primeiro teste no Ubuntu](docs/first-test.md).
 
-Para ler os controles, execute `"$HOME/.local/bin/evolinux" status --json`.
+Antes de ler valores, associe nomes e numids com a
+[identificação por metadados](docs/observed-alsa-profile.md). A primeira leitura
+deve usar `status --card N --control ID --json`, substituindo N e ID pelos
+identificadores reais conferidos. `status` sem seleção lê todos os controles
+suportados mapeados.
 `status` usa somente a API de controles ALSA. Não abre dispositivos PCM, reinicia
 PipeWire, reivindica interfaces USB ou carrega o módulo experimental. Sem a EVO,
 o resultado registra ausência ou indisponibilidade, em vez de mostrar valores
-de demonstração. Em um checkout, também pode usar:
+de demonstração. Em um checkout, a verificação inicial sem leitura de valores é:
 
 ```bash
-PYTHONPATH=src python3 -m evolinux status --json
+PYTHONPATH=src python3 -m evolinux doctor --json
 ```
 
 Leia as [instruções completas](docs/installation.md) e os
@@ -54,6 +71,8 @@ um ajuste manual condicionado ao valor ALSA conferido. Veja
 - Descoberta da EVO 16 por `/proc/asound` e metadados do mixer do kernel.
 - Instalação por usuário com atualização que preserva versões anteriores.
 - Diagnóstico de pré-requisitos e serviços sem abrir controles por padrão.
+- Resumo das posições efetivamente publicadas pelo driver, incluindo matrizes
+  esparsas, sem completar a matriz a partir dos descritores USB.
 - Backend ALSA CTL para ler controles das unidades 11, 60 e 61 quando expostos
   pelo driver, sem converter valores brutos em dB inventados.
 - Seleção de placa/numid na leitura para limitar o acesso ao controle escolhido.

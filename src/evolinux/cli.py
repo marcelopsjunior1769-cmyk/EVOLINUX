@@ -62,6 +62,8 @@ def _print_status(report):
             print("    {} · unidade {} · seletor {} · posições: {}".format(
                 "Ajustável com autorização" if control.get("adjustable") else "Somente leitura",
                 control.get("unit", "?"), control.get("selector", "?"), control.get("count", "?")))
+            if control.get("adjustment_block_reason") == "gain_range_not_validated":
+                print("    Ajuste bloqueado: a faixa de ganho tem apenas dois valores e não foi validada.")
     if report.get("errors"):
         print("Há erros de leitura. Use --json para os detalhes.")
     if report.get("cards"):
@@ -137,6 +139,19 @@ def _print_health(report):
     print("Kernel: {}".format(report.get("kernel") or "não identificado"))
     cards = report.get("alsa", {}).get("cards", [])
     print("Placas EVO 16 identificadas: {}".format(len(cards)))
+    for card in cards:
+        summary = card.get("metadata_summary")
+        if summary is None:
+            print("Placa {}: metadados incompletos.".format(card["card_number"]))
+            continue
+        print("Placa {}: {} controles mapeados, {} posições ALSA; valores não incluídos no resumo.".format(
+            card["card_number"], summary["mapped_control_count"], summary["reported_value_count"]))
+        for feature in summary["features"]:
+            print("  Unidade {} · seletor {}: {} posições ALSA.".format(
+                feature["unit"], feature["selector"], len(feature["channel_numbers"])))
+        for matrix in summary["matrices"]:
+            print("  Unidade {}: {} controles de entrada, {} posições ALSA.".format(
+                matrix["unit"], len(matrix["rows"]), matrix["reported_value_count"]))
     for service, info in report.get("services", {}).items():
         print("{}: {}".format(service, info["state"]))
     for warning in report.get("warnings", []):

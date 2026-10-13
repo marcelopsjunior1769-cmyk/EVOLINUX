@@ -396,7 +396,21 @@ def _adjustable(mapping, info, values):
         return False
     if mapping.selector == 13:
         return (info["minimum"], info["maximum"], info["step"]) == (0, 1, 1)
-    return 0 <= info["minimum"] < info["maximum"] <= 65535
+    # A binary INTEGER range on a gain selector does not establish a usable
+    # gain scale. Keep it readable until its adjustment semantics are validated.
+    return (0 <= info["minimum"] < info["maximum"] <= 65535
+            and info["maximum"] - info["minimum"] > 1)
+
+
+def _adjustment_block_reason(mapping, info, values):
+    """Explain the known binary gain restriction without interpreting its cause."""
+    if (mapping.unit == 11 and mapping.selector == 11
+            and _consistent(mapping, info) and info["readable"]
+            and _valid_values(info, values)
+            and 0 <= info["minimum"] < info["maximum"] <= 65535
+            and info["maximum"] - info["minimum"] <= 1):
+        return "gain_range_not_validated"
+    return None
 
 
 def _error(operation, exception, *, card_number=None, numid=None):
@@ -526,6 +540,9 @@ class NativeAlsaBackend:
                             values = ctl.read(element, info)
                             control["values"] = values
                             control["adjustable"] = _adjustable(mapping, info, values)
+                            reason = _adjustment_block_reason(mapping, info, values)
+                            if reason is not None:
+                                control["adjustment_block_reason"] = reason
                         except (OSError, ValueError, UnicodeError) as exception:
                             result["errors"].append(_error("control_read", exception,
                                                            card_number=number, numid=element.numid))

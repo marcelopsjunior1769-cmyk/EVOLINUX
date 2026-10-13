@@ -6,6 +6,36 @@ possui a EVO física nem `/proc/asound`.
 
 ## Testes automatizados
 
+### Atualização 0.3.1 — perfil ALSA recebido
+
+**198 testes passaram, nenhum ignorado**. São 30 de diagnóstico, 17 da CLI,
+16 específicos do perfil recebido, 51 do backend ALSA e 84 dos demais
+componentes. O novo resumo preserva máscaras diferentes por linha e não cria
+entradas/saídas ausentes. O diagnóstico padrão não abre ALSA CTL.
+
+O [perfil do usuário](observed-alsa-profile.md) foi preservado em cinco fixtures
+sanitizadas em `tests/fixtures/`: inventário numérico, lista ALSA, vínculos
+`Unit/Control/Info` e as leituras de ganho e fase. Não contêm usuário, host ou serial.
+Os vínculos reais identificam numids 1/2 para ganho/fase, 3–26 para mixer 60
+e 27–50 para mixer 61. O ganho observado tem faixa 0–1, passo 0 e 16 zeros;
+o backend o mantém legível e recusa prévia/ajuste sem escrever nos transportes
+simulados. A fase retornou BOOLEAN, 16 valores `off`, normalizados para zero
+nos testes; limites booleanos 0/1 e passo 1 vêm da política de `NativeCtl`,
+não foram campos relatados no `cget`. Matrizes usam faixas/valores sintéticos.
+
+Todos os transportes automatizados são falsos. Os acessos físicos relatados
+nesta etapa foram as leituras padrão de ganho e fase pelo `amixer`, executadas pelo usuário.
+O controlador nativo e a continuidade do áudio ainda não foram validados no
+equipamento.
+
+Wheel e sdist 0.3.1 foram construídos; a instalação foi atualizada em um prefixo
+de teste no Debian da nuvem com `--allow-unsupported`, preservando as quatro
+instalações anteriores. O comando instalado informou `EVOLINUX 0.3.1`;
+`doctor --json` retornou código 2 com pré-requisitos disponíveis e avisos esperados
+de distribuição, serviços e ausência de hardware. Isso não valida o Ubuntu físico.
+O runtime instalado também recusou a faixa de ganho 0–1 numa chamada pura,
+sem abrir CTL, demonstrando que a proteção está no pacote instalado.
+
 ### Atualização 0.3.0 — 13 de outubro de 2026
 
 **170 testes passaram, nenhum ignorado**. O backend ALSA passou 46 testes,
@@ -18,7 +48,8 @@ valor que já corresponde ao proposto.
 Nenhuma escrita no equipamento ocorreu. As prévias e os ajustes condicionais
 foram exercitados com transportes simulados. A coleta direta de metadados sem
 instalação foi conferida com arquivos temporários, sem acessar hardware.
-A saída real desse procedimento no Ubuntu do usuário continua pendente.
+Naquela etapa, a saída real desse procedimento no Ubuntu ainda estava pendente;
+o inventário numérico recebido posteriormente está descrito na atualização 0.3.1.
 
 ### Atualização 0.2.0 para uso pelo terminal
 
@@ -68,7 +99,8 @@ O build Python terminou com sucesso e produziu wheel e sdist. O wheel contém
 somente o runtime Python e os avisos de licença; o sdist inclui também testes,
 documentação, ferramentas, fontes do módulo e header UAPI.
 Instaladores, bibliotecas/driver do fabricante,
-relatórios reais, cache, arquivos Git e módulos compilados são excluídos.
+relatórios completos do equipamento, cache, arquivos Git e módulos compilados
+são excluídos. A fixture de metadados numéricos sanitizados acompanha os testes.
 O binding e os alocadores da `libasound.so.2` instalada foram verificados
 separadamente, sem abrir uma sessão CTL ou PCM.
 

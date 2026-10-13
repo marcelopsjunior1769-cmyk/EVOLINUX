@@ -67,11 +67,57 @@ class CliTests(unittest.TestCase):
             self.assertEqual(cli.main(["doctor", "--json"]), 0)
         check.assert_called_once_with(include_controls=False)
 
+    def test_binary_gain_read_reports_why_adjustment_is_blocked(self):
+        stream = io.StringIO()
+        with patch.object(cli, "NativeAlsaBackend") as backend, contextlib.redirect_stdout(stream):
+            backend.return_value.snapshot.return_value = {
+                "status": "found", "errors": [], "cards": [{"card_number": 1,
+                "controls": [{"numid": 1, "name": "Input Gain Control", "unit": 11,
+                              "selector": 11, "count": 16, "values": [0] * 16,
+                              "minimum": 0, "maximum": 1, "step": 0,
+                              "adjustable": False,
+                              "adjustment_block_reason": "gain_range_not_validated"}]}]}
+            self.assertEqual(cli.main(["status", "--card", "1", "--control", "1"]), 0)
+        self.assertIn("Somente leitura", stream.getvalue())
+        self.assertIn("Ajuste bloqueado", stream.getvalue())
+        self.assertNotIn("Ajustável com autorização", stream.getvalue())
+        backend.return_value.set_value.assert_not_called()
+
     def test_doctor_reads_controls_only_when_explicitly_requested(self):
         with patch("evolinux.health.check_environment") as check, contextlib.redirect_stdout(io.StringIO()):
             check.return_value = {"status": "warnings", "software_prerequisites": "ready"}
             self.assertEqual(cli.main(["doctor", "--json", "--controls"]), 2)
         check.assert_called_once_with(include_controls=True)
+
+    def test_doctor_displays_actual_metadata_counts_without_reading_controls(self):
+        stream = io.StringIO()
+        with patch("evolinux.health.check_environment") as check, contextlib.redirect_stdout(stream):
+            check.return_value = {"status": "ready", "software_prerequisites": "ready",
+                "alsa": {"cards": [{"card_number": 1, "metadata_summary": {
+                    "mapped_control_count": 50, "reported_value_count": 272,
+                    "features": [{"unit": 11, "selector": 11,
+                                  "channel_numbers": list(range(1, 17))}],
+                    "matrices": [{"unit": 60, "rows": [{}] * 24,
+                                  "reported_value_count": 144},
+                                 {"unit": 61, "rows": [{}] * 24,
+                                  "reported_value_count": 96}]}}]}}
+            self.assertEqual(cli.main(["doctor"]), 0)
+        check.assert_called_once_with(include_controls=False)
+        output = stream.getvalue()
+        self.assertIn("Placa 1: 50 controles mapeados, 272 posições ALSA", output)
+        self.assertIn("seletor 11: 16 posições ALSA", output)
+        self.assertIn("Unidade 60: 24 controles de entrada, 144 posições ALSA", output)
+        self.assertIn("Unidade 61: 24 controles de entrada, 96 posições ALSA", output)
+
+    def test_doctor_does_not_show_invented_counts_for_missing_metadata(self):
+        stream = io.StringIO()
+        with patch("evolinux.health.check_environment") as check, contextlib.redirect_stdout(stream):
+            check.return_value = {"status": "warnings", "software_prerequisites": "ready",
+                                 "alsa": {"cards": [{"card_number": 1}]}}
+            self.assertEqual(cli.main(["doctor"]), 2)
+        check.assert_called_once_with(include_controls=False)
+        self.assertIn("Placa 1: metadados incompletos", stream.getvalue())
+        self.assertNotIn("posições ALSA", stream.getvalue())
 
     def test_selected_control_is_passed_to_native_backend(self):
         with patch.object(cli, "NativeAlsaBackend") as backend, contextlib.redirect_stdout(io.StringIO()):

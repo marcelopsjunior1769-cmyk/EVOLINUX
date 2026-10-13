@@ -22,6 +22,16 @@ kernel. O filtro omite as linhas `Card:` e `Control:`, incluindo nomes de
 controles, identificação de placa e números de série presentes nessas linhas.
 Não substitua esse filtro por uma cópia do arquivo `usbmixer` inteiro.
 
+Essa coleta já foi recebida para `card1` no Ubuntu 24.04.4 do usuário. O
+[perfil observado](observed-alsa-profile.md) registra ganho/fase FU11 com
+16 posições e mixers 60/61 com entradas 1–24 e 6/4 saídas. A lista de nomes,
+índices e numids de `amixer controls` e as linhas `Control:` filtradas também
+foram recebidas, confirmando seu vínculo com entidades/entradas. Uma leitura
+selecionada por `amixer` retornou o ganho FU11 com faixa 0–1, ainda sem escala
+ou efeito físico validado; outra retornou fase BOOLEAN com 16 posições `off`.
+Não é necessário repetir essas coletas se a placa
+e sua configuração não mudaram; o perfil documenta as pendências atuais.
+
 ## O que os campos permitem verificar
 
 | Campo | Informação |
@@ -65,4 +75,8 @@ USB ID diferente foi ignorada. As linhas `USB Mixer:`, `Unit:` e `Info:` da
 placa correspondente foram preservadas; nomes de placa, nomes de controles
 e números de série colocados em outras linhas não apareceram na saída.
 Nenhum dispositivo de áudio foi acessado durante essa verificação. A coleta
-no Ubuntu com a EVO física ainda está pendente.
+no Ubuntu com a EVO física, os nomes/índices/numids e seu vínculo com entidades
+foram fornecidos pelo usuário. Os valores e a faixa do ganho padrão também
+foram recebidos por leitura ALSA separada, assim como as 16 posições `off` de
+fase. Valores de matrizes, efeitos
+físicos e continuidade do áudio ainda não foram validados.

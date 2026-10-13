@@ -31,6 +31,13 @@ Nenhuma dessas verificações prova continuidade do áudio sem teste físico.
 
 ## Condições para uma alteração padrão
 
+Na leitura recebida do Ubuntu, o ganho FU11 tem faixa ALSA `0..1`, passo 0 e
+16 valores em zero. A causa dessa faixa não foi determinada. O controlador
+preserva a leitura e bloqueia `plan-set`/`set` para ganho com apenas dois valores,
+com `adjustment_block_reason: "gain_range_not_validated"`. Não converta essa faixa
+em dB nem use tentativas de escrita para descobrir o ganho de pré-amplificador.
+Esse bloqueio não muda o tratamento do controle BOOLEAN de fase.
+
 `plan-set` usa uma leitura seletiva para validar uma proposta, sem abrir sessão
 gravável ou chamar a escrita do aplicativo. Ele compartilha os limites da
 leitura ALSA descritos acima. O comando sugerido precisa ser executado

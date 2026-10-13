@@ -6,6 +6,24 @@ Sistema informado: Ubuntu 24.04.4 LTS (Noble). Fonte dos dados: texto de `lsusb 
 
 O trecho expõe ganho e inversão de polaridade no Feature Unit 11 e duas matrizes de mixer, 60 e 61. Os avisos de “Junk at end of descriptor” e os campos `bmControls=0xff` / `iMixer=255` dessas matrizes são explicados pelo decodificador do `lsusb`, não demonstram firmware danificado. Isto identifica controles candidatos para o controlador nativo Linux; não prova correspondência física nem operação contínua com ALSA/PipeWire. A investigação histórica de DLL substituta/Wine também não produziu um aplicativo funcional.
 
+Uma coleta posterior de `/proc/asound/card1/usbmixer`, no kernel informado
+`7.0.0-38-generic`, publicou 16 posições ALSA por controle de ganho/fase FU11
+e matrizes com entradas 1–24, mantendo 6/4 saídas. Isso corresponde a um
+subconjunto dos 24 canais FU11 e das 34 entradas de matriz anunciados abaixo.
+O [perfil ALSA observado](observed-alsa-profile.md) registra esses limites e
+as informações que ainda faltam; nenhum valor ou ajuste foi obtido nessa coleta.
+
+As linhas `Control:` fornecidas depois confirmaram o vínculo ALSA: ganho/fase
+FU11 em numids 1/2; entradas 1–24 do Mixer 60 em numids 3–26, índices 0–23;
+entradas 1–24 do Mixer 61 em numids 27–50, índices 24–47. Todos os controles de
+matriz se chamam `Analogue 5 Volume`, sem comprovar canais físicos. Uma leitura
+separada por `amixer` retornou o ganho FU11 INTEGER com 16 valores zero, faixa
+0–1 e passo 0. Isso ainda não valida a escala ou o efeito de ganho; sua causa
+permanece desconhecida e o controlador bloqueia ajustes nessa faixa.
+Outra leitura por `amixer` retornou o controle de fase FU11 BOOLEAN com 16
+posições `off`, sem ajuste ou validação de polaridade física. A continuidade
+do áudio durante as leituras não foi informada.
+
 ## Matrizes 60 e 61: reconstrução dos campos
 
 O layout UAC2 Mixer Unit (seção 4.7.2.6, tabela 4-11, citada pelo usbutils) é:

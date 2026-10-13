@@ -111,6 +111,7 @@ def _card_metadata(asound_root, errors):
                                  "channels": mapping.channels,
                                  "usb_type": mapping.usb_type}
                                 for mapping in mappings.values()]
+            card["metadata_summary"] = _metadata_summary(mappings.values())
             card["metadata_status"] = "found"
         except (OSError, ValueError, UnicodeError) as exception:
             errors.append(_error("mixer_metadata", exception, card_number=number))
@@ -130,6 +131,30 @@ def _supported_mapping(mapping):
             and 0 < mapping.channel_mask < (1 << outputs)
             and mapping.channel_mask.bit_count() == mapping.channels
             and mapping.usb_type == "S16")
+
+
+def _metadata_summary(mappings):
+    """Describe exposed positions without assuming descriptor-sized matrices.
+
+    Rows retain each selector's effective output mask: missing inputs or outputs
+    are not expanded into a rectangular matrix. No ALSA value is requested.
+    """
+    mappings = sorted(mappings, key=lambda item: (item.unit, item.selector, item.index))
+    features = [{"unit": item.unit, "selector": item.selector,
+                 "channel_numbers": item.channel_numbers()}
+                for item in mappings if item.unit == 11]
+    matrices = []
+    for unit in (60, 61):
+        rows = [item for item in mappings if item.unit == unit]
+        if rows:
+            matrices.append({"unit": unit,
+                             "rows": [{"input_selector": item.selector,
+                                       "output_channels": item.channel_numbers()}
+                                      for item in rows],
+                             "reported_value_count": sum(item.channels for item in rows)})
+    return {"mapped_control_count": len(mappings),
+            "reported_value_count": sum(item.channels for item in mappings),
+            "features": features, "matrices": matrices}
 
 
 def _service_state(service, runner):
@@ -156,10 +181,15 @@ def _private_snapshot(snapshot):
                     "maximum", "step", "readable", "writable", "active", "locked",
                     "owner", "adjustable")
     for card in snapshot.get("cards", [])[:MAX_CARDS]:
+        controls = []
+        for control in card.get("controls", [])[:4096]:
+            clean = {key: control[key] for key in control_keys if key in control}
+            if control.get("adjustment_block_reason") == "gain_range_not_validated":
+                clean["adjustment_block_reason"] = "gain_range_not_validated"
+            controls.append(clean)
         result["cards"].append({
             "card_number": card["card_number"],
-            "controls": [{key: control[key] for key in control_keys if key in control}
-                         for control in card.get("controls", [])[:4096]]})
+            "controls": controls})
     for item in snapshot.get("errors", [])[:4096]:
         code = item.get("errno")
         clean = {"errno": code, "message": os.strerror(code) if code else

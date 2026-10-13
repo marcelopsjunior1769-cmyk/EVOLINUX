@@ -1,0 +1,3 @@
+numid=2,iface=MIXER,name='Phase Inverter Control'
+  ; type=BOOLEAN,access=rw------,values=16
+  : values=off,off,off,off,off,off,off,off,off,off,off,off,off,off,off,off

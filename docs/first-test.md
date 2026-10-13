@@ -39,10 +39,12 @@ placa, cabeçalhos e números de série não entram no relatório.
 
 ## Observar a leitura com áudio em funcionamento
 
-Mantenha sua reprodução ou gravação habitual ativa e execute uma vez:
+Confira a identificação no [perfil observado](observed-alsa-profile.md).
+Se a EVO continuar em `card1` e o ganho em `numid=1`, mantenha sua reprodução
+ou gravação habitual ativa e execute uma vez:
 
 ```bash
-"$HOME/.local/bin/evolinux" status --json
+"$HOME/.local/bin/evolinux" status --card 1 --control 1 --json
 ```
 
 Esse comando abre somente ALSA CTL em modo de leitura; não abre PCM, não toma a
@@ -51,7 +53,8 @@ normal durante a leitura. Observe tanto a reprodução quanto a gravação que
 realmente utiliza. Se houver interrupção, anote o comportamento e o resultado
 JSON antes de repetir o teste.
 
-Uma inspeção equivalente pode ser anexada ao diagnóstico com:
+Depois de validar a leitura seletiva, uma inspeção de todos os controles
+mapeados pode ser anexada ao diagnóstico com:
 
 ```bash
 "$HOME/.local/bin/evolinux" doctor --json --controls
@@ -79,7 +82,7 @@ valores para análise sem exportar textos de identificação arbitrários.
 
 O relatório também identifica a versão do kernel sem ler o nome do computador.
 Guarde os resultados de `doctor --json` e, após observar o áudio, de
-`status --json`, junto com uma descrição de eventuais interrupções. Execute os
+`status --card N --control ID --json`, junto com uma descrição de eventuais interrupções. Execute os
 comandos como seu usuário da sessão gráfica. Se ocorrer `EACCES`, investigue o
 acesso existente à placa; não rode o aplicativo inteiro como root nem aplique
 permissões globais aos dispositivos.

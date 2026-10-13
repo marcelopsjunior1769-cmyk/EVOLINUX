@@ -1,0 +1,163 @@
+USB Mixer: usb_id=0x2708000a, ctrlif=0, ctlerr=0
+  Unit: 11
+    Control: name="Phase Inverter Control", index=0
+    Info: id=11, control=13, cmask=0xffffff, channels=16, type="BOOLEAN"
+  Unit: 11
+    Control: name="Input Gain Control", index=0
+    Info: id=11, control=11, cmask=0xffffff, channels=16, type="S16"
+  Unit: 40
+    Control: name="Audient Clock Selector Clock Source", index=0
+    Info: id=40, control=1, cmask=0x0, channels=1, type="U8"
+  Unit: 41
+    Control: name="Audient Internal Clock Validity", index=0
+    Info: id=41, control=2, cmask=0x0, channels=1, type="BOOLEAN"
+  Unit: 44
+    Control: name="Audient Optical1 Clock Validity", index=0
+    Info: id=44, control=2, cmask=0x0, channels=1, type="BOOLEAN"
+  Unit: 45
+    Control: name="Audient Optical2 Clock Validity", index=0
+    Info: id=45, control=2, cmask=0x0, channels=1, type="BOOLEAN"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=23
+    Info: id=60, control=24, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=22
+    Info: id=60, control=23, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=21
+    Info: id=60, control=22, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=20
+    Info: id=60, control=21, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=19
+    Info: id=60, control=20, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=18
+    Info: id=60, control=19, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=17
+    Info: id=60, control=18, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=16
+    Info: id=60, control=17, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=15
+    Info: id=60, control=16, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=14
+    Info: id=60, control=15, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=13
+    Info: id=60, control=14, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=12
+    Info: id=60, control=13, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=11
+    Info: id=60, control=12, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=10
+    Info: id=60, control=11, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=9
+    Info: id=60, control=10, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=8
+    Info: id=60, control=9, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=7
+    Info: id=60, control=8, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=6
+    Info: id=60, control=7, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=5
+    Info: id=60, control=6, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=4
+    Info: id=60, control=5, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=3
+    Info: id=60, control=4, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=2
+    Info: id=60, control=3, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=1
+    Info: id=60, control=2, cmask=0x3f, channels=6, type="S16"
+  Unit: 60
+    Control: name="Analogue 5 Volume", index=0
+    Info: id=60, control=1, cmask=0x3f, channels=6, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=47
+    Info: id=61, control=24, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=46
+    Info: id=61, control=23, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=45
+    Info: id=61, control=22, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=44
+    Info: id=61, control=21, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=43
+    Info: id=61, control=20, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=42
+    Info: id=61, control=19, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=41
+    Info: id=61, control=18, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=40
+    Info: id=61, control=17, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=39
+    Info: id=61, control=16, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=38
+    Info: id=61, control=15, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=37
+    Info: id=61, control=14, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=36
+    Info: id=61, control=13, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=35
+    Info: id=61, control=12, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=34
+    Info: id=61, control=11, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=33
+    Info: id=61, control=10, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=32
+    Info: id=61, control=9, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=31
+    Info: id=61, control=8, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=30
+    Info: id=61, control=7, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=29
+    Info: id=61, control=6, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=28
+    Info: id=61, control=5, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=27
+    Info: id=61, control=4, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=26
+    Info: id=61, control=3, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=25
+    Info: id=61, control=2, cmask=0xf, channels=4, type="S16"
+  Unit: 61
+    Control: name="Analogue 5 Volume", index=24
+    Info: id=61, control=1, cmask=0xf, channels=4, type="S16"

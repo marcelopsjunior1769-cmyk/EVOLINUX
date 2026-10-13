@@ -1,5 +1,20 @@
 # Histórico de alterações
 
+## 0.3.1 — inventário ALSA observado no Ubuntu
+
+- Perfil numérico fornecido pelo usuário preservado sem identificação pessoal:
+  16 posições por controle FU11 e matrizes 24×6/24×4.
+- Nomes, índices e numids reais vinculados às unidades do driver; controles
+  com nome compartilhado continuam separados pelo índice ALSA.
+- Ganho FU11 com a faixa inteira 0–1 recebida permanece legível, mas a prévia e
+  o ajuste são bloqueados com motivo explícito, sem inferir a causa dessa faixa.
+- `doctor` resume controles e posições expostos sem ler valores, inferir canais
+  físicos ou preencher linhas/saídas ausentes.
+- Testes de regressão do perfil, seleção de um controle e limites de posições;
+  documentação distingue metadados reais de identidades/valores simulados.
+- Fixtures sanitizadas incluídas no pacote de fontes, distinguindo metadados e
+  ganho observados de valores de fase/matriz simulados.
+
 ## 0.3.0 — prévia e conferência do valor ALSA
 
 - `plan-set` lê o controle selecionado e valida uma proposta de ganho/fase FU11,

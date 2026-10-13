@@ -2,7 +2,7 @@
 # Copyright (c) 2026 EVOLINUX contributors
 """Native EVO 16 controller components and opt-in, read-only UAC2 research."""
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 from .protocol import (CUR, RANGE, ControlRead, SubRange, UsbSetup,
                        decode_gain_db, decode_range, mixer_read)

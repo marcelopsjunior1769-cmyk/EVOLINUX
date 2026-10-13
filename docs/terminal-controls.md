@@ -7,6 +7,22 @@ a leitura durante o uso normal do áudio.
 
 ## Identificar o controle
 
+O [perfil já recebido do Ubuntu](observed-alsa-profile.md) identifica `card1`,
+16 posições por controle FU11 e matrizes 24×6/24×4. `amixer controls` também
+identificou numid 1 como `Input Gain Control`, numid 2 como
+`Phase Inverter Control` e numids 3–50 como `Analogue 5 Volume`, índices 0–47.
+As linhas `Control:` recebidas confirmaram FU11 nos numids 1/2, Mixer 60 nos
+numids 3–26 e Mixer 61 nos numids 27–50. A entrada de cada matriz está
+registrada no perfil; o nome repetido não identifica canais físicos.
+
+O usuário também forneceu `amixer -c 1 cget numid=1`: ganho INTEGER com
+16 valores, faixa 0–1, passo 0 e todos os valores zero. Essa faixa não valida
+uma escala de ganho; o controlador permite leitura e bloqueia a prévia e o
+ajuste com `gain_range_not_validated`. A causa e o efeito físico são
+desconhecidos. A leitura de `numid=2` também foi recebida: fase BOOLEAN com
+16 posições `off`, sem escrita ou efeito físico testado. A continuidade do
+áudio não foi informada. Valores de matrizes ainda não foram lidos nesta sessão.
+
 `evolinux status` mostra placa, numid, nome, valores, faixa inteira ALSA e
 disponibilidade de ajuste. `status --card N --control ID --json` limita a leitura
 ao controle escolhido. N e ID devem vir do resultado real; não são números
@@ -16,6 +32,11 @@ O argumento `--channel` representa a posição 1–N do vetor desse controle ALS
 Essa posição não identifica automaticamente um dos oito pré-amplificadores
 físicos. Valores de ganho são inteiros normalizados do ALSA, não dB. O ganho
 padrão FU11 também não equivale comprovadamente ao controle privado EU58.
+
+Para a primeira leitura pelo controlador instalado, se a EVO continuar em
+`card1`, use `evolinux status --card 1 --control 1 --json`, seguindo a observação de áudio do
+[primeiro teste](first-test.md). `status` sem seleção lê todos os controles
+suportados que forem mapeados; não é a coleta inicial de metadados.
 
 ## Prévia sem escrita pelo aplicativo
 
@@ -32,6 +53,11 @@ leituras incompletas, posição inválida e valores fora da faixa/passo. Somente
 ganho padrão FU11 e inversão de polaridade FU11 são candidatos a ajuste.
 Matrizes, clock, phantom, Smartgain e extensões privadas permanecem fora desse
 caminho.
+
+No perfil recebido, o ganho FU11 com faixa 0–1 permanece bloqueado, inclusive
+com autorização explícita. Uma faixa BOOLEAN 0–1 para o controle de fase tem
+semântica diferente; sua correspondência física ainda precisa ser validada
+antes de qualquer ajuste.
 
 Use `--json` para obter `current_value`, `target_value`, `would_change`,
 `write_performed: false` e os argumentos do comando manual. `usb_channel` é

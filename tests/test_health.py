@@ -72,6 +72,45 @@ class HealthTests(unittest.TestCase):
             self.assertEqual(call.kwargs, {"capture_output": True, "text": True,
                                           "timeout": 2, "check": False})
 
+    def test_metadata_summary_uses_effective_feature_channels_not_mask_width(self):
+        report = self.report()
+        summary = report["alsa"]["cards"][0]["metadata_summary"]
+        self.assertEqual(summary, {
+            "mapped_control_count": 1, "reported_value_count": 16,
+            "features": [{"unit": 11, "selector": 11,
+                          "channel_numbers": list(range(1, 17))}], "matrices": []})
+        self.backend.assert_not_called()
+        self.assertNotIn("controls", report)
+
+    def test_sparse_matrix_summary_preserves_each_rows_output_channels(self):
+        def row(selector, mask, channels):
+            return ('  Unit: 60\n    Control: name="private row {selector}", index=0\n'
+                    '    Info: id=60, control={selector}, cmask=0x{mask:x}, '
+                    'channels={channels}, type="S16"\n').format(
+                        selector=selector, mask=mask, channels=channels)
+        # Neither missing input 2 nor missing outputs may be inferred from USB
+        # descriptor sizes or from the union of these two different row masks.
+        (self.card / "usbmixer").write_text(HEADER + row(3, 0x12, 2) + row(1, 0x05, 2))
+        report = self.report()
+        self.assertEqual(report["alsa"]["cards"][0]["metadata_summary"], {
+            "mapped_control_count": 2, "reported_value_count": 4, "features": [],
+            "matrices": [{"unit": 60, "reported_value_count": 4,
+                          "rows": [{"input_selector": 1, "output_channels": [1, 3]},
+                                   {"input_selector": 3, "output_channels": [2, 5]}]}]})
+        self.backend.assert_not_called()
+        self.assertNotIn("private", json.dumps(report))
+
+    def test_unidentified_inventory_does_not_create_a_mapped_summary(self):
+        numeric_only = HEADER + '\n'.join(
+            line for line in RECORD.splitlines() if "Control:" not in line)
+        (self.card / "usbmixer").write_text(numeric_only)
+        report = self.report()
+        card = report["alsa"]["cards"][0]
+        self.assertEqual(card["metadata_status"], "unavailable")
+        self.assertEqual(card["mappings"], [])
+        self.assertNotIn("metadata_summary", card)
+        self.backend.assert_not_called()
+
     def test_kernel_report_is_informational_and_does_not_read_host_identity(self):
         with patch("evolinux.health.platform.node", side_effect=AssertionError("no host identity")):
             report = self.report(kernel_release="7.0.0-38-generic")
@@ -265,6 +304,21 @@ class HealthTests(unittest.TestCase):
         self.assertEqual(report["controls"], {"status": "unavailable", "cards": [], "errors": []})
         self.assertEqual(report["errors"][0]["errno"], errno.ENODEV)
         self.assertEqual(report["software_prerequisites"], "ready")
+
+    def test_optional_snapshot_exports_only_known_adjustment_block_reason(self):
+        backend = Mock()
+        backend.snapshot.return_value = {
+            "status": "found", "cards": [{"card_number": 3, "controls": [
+                {"numid": 1, "adjustable": False,
+                 "adjustment_block_reason": "gain_range_not_validated"},
+                {"numid": 2, "adjustment_block_reason": "private serial HOSTNAME"}]}],
+            "errors": []}
+        report = self.report(include_controls=True, backend_factory=Mock(return_value=backend))
+        controls = report["controls"]["cards"][0]["controls"]
+        self.assertEqual(controls[0]["adjustment_block_reason"], "gain_range_not_validated")
+        self.assertNotIn("adjustment_block_reason", controls[1])
+        self.assertNotIn("private", json.dumps(report))
+        self.assertNotIn("HOSTNAME", json.dumps(report))
 
     def test_invalid_parameters_are_rejected_before_any_service_or_library_call(self):
         with self.assertRaises(ValueError):
