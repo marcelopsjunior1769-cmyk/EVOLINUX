@@ -148,6 +148,34 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(unavailable["status"], "unavailable")
         self.assertEqual(unavailable["errors"][0]["errno"], errno.ENOENT)
 
+    def test_selected_control_does_not_read_other_controls_or_cards(self):
+        other = self.root / "card5"
+        other.mkdir()
+        (other / "usbid").write_text("2708:000a\n")
+        self.state["read_errors"] = {8: OSError(errno.EIO, "unrelated read failed")}
+        result = self.backend.snapshot(card_number=3, numid=7)
+        self.assertEqual(result["status"], "found")
+        self.assertEqual(self.state["reads"], [7])
+        self.assertEqual([session.card_number for session in self.state["sessions"]], [3])
+        self.assertEqual([item["numid"] for item in result["cards"][0]["controls"]], [7])
+        self.assertEqual(self.state["writes"], [])
+
+    def test_missing_or_unsupported_selected_control_cannot_pass_as_found(self):
+        for numid, code in ((99, errno.ENOENT), (10, errno.EOPNOTSUPP)):
+            with self.subTest(numid=numid):
+                result = self.backend.snapshot(card_number=3, numid=numid)
+                self.assertEqual(result["status"], "partial")
+                self.assertEqual(result["errors"][0]["errno"], code)
+                self.assertEqual(result["cards"][0]["controls"], [])
+        self.assertEqual(self.state["reads"], [])
+
+    def test_invalid_snapshot_selection_fails_before_opening_any_card(self):
+        for selection in ({"numid": 7}, {"card_number": -1}, {"card_number": True},
+                          {"card_number": 3, "numid": 0}, {"card_number": 3, "numid": True}):
+            with self.subTest(selection=selection), self.assertRaises(ValueError):
+                self.backend.snapshot(**selection)
+        self.assertEqual(self.state["sessions"], [])
+
     def test_missing_native_library_is_unavailable_even_with_known_card(self):
         with patch("evolinux.alsa.ctypes.CDLL", side_effect=OSError("missing libasound")):
             result = NativeAlsaBackend(self.root).snapshot()

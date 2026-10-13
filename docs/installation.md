@@ -6,15 +6,36 @@ Audient não são necessários para o controlador nativo.
 
 ## Pacote Python
 
+Para uso pelo terminal, o caminho recomendado é o
+[instalador por usuário](ubuntu-installer.md). Com os fontes nesta máquina:
+
+```bash
+sudo apt update
+sudo apt install python3 python3-venv libasound2t64
+bash tools/install-ubuntu.sh --check
+bash tools/install-ubuntu.sh
+"$HOME/.local/bin/evolinux" doctor --json
+```
+
+Isso não executa testes no dispositivo nem altera serviços ou permissões de
+áudio. A instalação é feita a partir do checkout local; o código deste ambiente
+ainda precisa ser transferido para o Ubuntu do usuário. O diagnóstico padrão
+não abre controles. Use [o roteiro do primeiro teste](first-test.md) depois
+de instalar. GUI/Tkinter não são necessários nesta versão.
+
+Para desenvolvimento e instalação editável, siga a alternativa abaixo.
+
 Execute os comandos na raiz do checkout existente. Para obter o código em uma
 nova máquina, faça primeiro:
 
 ```bash
-git clone https://github.com/marcelopsjunior1769-cmyk/EVOLINUX.git
+git clone --branch codex/evo16-native-controller https://github.com/marcelopsjunior1769-cmyk/EVOLINUX.git
 cd EVOLINUX
 ```
 
-Esse clone estará disponível depois da publicação do repositório com os fontes.
+Essa branch estará disponível depois do envio dos fontes ao GitHub, que ainda
+está pendente de autorização da integração. Não recrie o checkout existente
+para executar estes passos.
 O pacote de fontes também pode ser extraído localmente antes da publicação.
 
 ```bash
@@ -45,6 +66,15 @@ ser confirmada durante uma sessão real de gravação/reprodução.
 
 Uma lista vazia não demonstra que o mixer funciona. Se o driver não expuser os
 controles necessários, isso permanece uma limitação a investigar.
+
+`status --card N` consulta somente a placa ALSA escolhida. Acrescente
+`--control ID` para ler apenas um numid dessa placa, usando os números reais
+do resultado anterior. O backend não lê valores dos outros controles nessa
+seleção; controles ausentes ou sem mapeamento conhecido retornam erro.
+
+O diagnóstico `doctor` retorna 0 quando seus pré-requisitos e verificações
+terminam sem avisos, 2 quando há avisos ou dados incompletos, e 1 quando falta
+um pré-requisito obrigatório. Nenhum desses códigos comprova áudio contínuo.
 
 ## Ajustes padrão ALSA
 

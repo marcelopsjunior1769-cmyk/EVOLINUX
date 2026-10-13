@@ -437,7 +437,12 @@ class NativeAlsaBackend:
             raise ValueError("no supported kernel mixer mappings were found")
         return mappings
 
-    def snapshot(self):
+    def snapshot(self, *, card_number=None, numid=None):
+        """Read all mapped controls, or limit native I/O to one card/control."""
+        if card_number is not None and (type(card_number) is not int or not 0 <= card_number <= 4095):
+            raise ValueError("invalid ALSA card number")
+        if numid is not None and (card_number is None or type(numid) is not int or not 1 <= numid <= 0xffffffff):
+            raise ValueError("a control numid requires a valid card number")
         result = {"status": "unavailable", "cards": [], "errors": []}
         try:
             directories = sorted(self.asound_root.iterdir(), key=lambda item: item.name)
@@ -450,6 +455,8 @@ class NativeAlsaBackend:
             if not match:
                 continue
             number = int(match[1])
+            if card_number is not None and number != card_number:
+                continue
             try:
                 if self._usb_id(number) == USB_ID:
                     candidates.append(number)
@@ -480,6 +487,16 @@ class NativeAlsaBackend:
                     if self._usb_id(number) != USB_ID or self._mappings(number) != mappings:
                         raise OSError(errno.EAGAIN, "EVO identity or mapping changed")
                     elements = ctl.list_elements()
+                    expected = set(mappings)
+                    if numid is not None:
+                        elements = [element for element in elements if element.numid == numid]
+                        if len(elements) != 1:
+                            raise OSError(errno.ENOENT, "requested ALSA control is absent or ambiguous")
+                        selected = elements[0]
+                        if ((selected.name, selected.index) not in mappings
+                                or selected.interface != 2 or selected.device or selected.subdevice):
+                            raise OSError(errno.EOPNOTSUPP, "requested control has no supported EVO mapping")
+                        expected = {(selected.name, selected.index)}
                     matched = set()
                     for element in elements:
                         key = (element.name, element.index)
@@ -512,7 +529,7 @@ class NativeAlsaBackend:
                         except (OSError, ValueError, UnicodeError) as exception:
                             result["errors"].append(_error("control_read", exception,
                                                            card_number=number, numid=element.numid))
-                    if matched != set(mappings):
+                    if matched != expected:
                         raise OSError(errno.ENOENT, "mapped ALSA controls were not found")
                     if self._usb_id(number) != USB_ID or self._mappings(number) != mappings:
                         for control in card["controls"]:

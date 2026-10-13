@@ -7,6 +7,7 @@ recursive-include tests *.py
 recursive-include include *.h
 recursive-include kernel *.c Makefile README.md
 recursive-include tools *.py
+recursive-include tools *.sh
 recursive-include research *.py *.md
 prune build
 prune dist

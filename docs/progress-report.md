@@ -25,10 +25,19 @@ e [tusbaudio-notifications.md](tusbaudio-notifications.md).
 
 ## Componentes desenvolvidos
 
+A evolução para 0.2.0 prioriza o terminal, conforme a escolha do usuário.
+Foram acrescentados `health.py`/`doctor`, o instalador por usuário e seleção
+de placa/numid em `status`. O diagnóstico padrão não abre CTL ou PCM; informa
+pré-requisitos, kernel, metadados ALSA e serviços de áudio. O instalador não
+abre dispositivos e preserva versões anteriores. O rascunho de GUI foi
+preservado fora do runtime, em vez de entrar nesta entrega.
+
 | Componente | Arquivos | Estado |
 | --- | --- | --- |
 | Backend nativo ALSA CTL | `src/evolinux/alsa.py` | Descoberta, snapshot e ajuste explícito de ganho/fase; testes com transporte simulado |
 | CLI Python | `src/evolinux/cli.py`, `__main__.py` | `status`, `collect`, ajuste autorizado; erros e ausência não viram leituras simuladas |
+| Diagnóstico de primeiro uso | `src/evolinux/health.py` | `doctor`, serviços e metadados sem CTL por padrão |
+| Instalador por usuário | `tools/install-ubuntu.sh` | Instalação CLI isolada, atualização e falhas sem apagar versões anteriores |
 | Diagnóstico de metadados | `diagnostics.py`, `devices.py`, `tools/collect_evo16.py` | Leitura sysfs, parsing de configuração ativa e proteção de identidade/privacidade |
 | Protocolo de leituras UAC2 | `protocol.py`, `readonly.py`, `tools/read_evo16.py` | CUR/RANGE, parsing e contrato ioctl; pesquisa opcional |
 | Transporte de kernel | `kernel/evo16_readonly.c`, `include/evo16_bridge_uapi.h` | Somente IN, whitelist e timeout; compilado, nunca carregado |

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "evolinux-evo16"
-version = "0.1.0"
+version = "0.2.0"
 description = "Controlador nativo experimental Audient EVO 16 para ALSA no Linux"
 readme = "README.md"
 requires-python = ">=3.10"

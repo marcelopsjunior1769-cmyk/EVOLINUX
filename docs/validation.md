@@ -6,6 +6,23 @@ possui a EVO física nem `/proc/asound`.
 
 ## Testes automatizados
 
+### Atualização 0.2.0 para uso pelo terminal
+
+O conjunto completo executou **148 testes, todos aprovados**, sem casos
+ignorados. Inclui 26 testes de diagnóstico, 13 do instalador, 29 do backend
+ALSA e 9 da CLI, além dos testes anteriores de descritores/protocolo/transporte.
+Os testes da nova seleção demonstram que os outros controles não são lidos.
+Os do instalador cobrem falhas antes e após a ativação do lançador, colisões,
+argumentos com caracteres de shell e preservação das versões existentes.
+
+A instalação completa e atualização foram exercitadas no ambiente Debian da
+nuvem com `--allow-unsupported` e prefixo de teste próprio. O lançador e a versão
+instalada foram verificados sem abrir uma placa; o diagnóstico real retornou
+pré-requisitos disponíveis e avisos esperados de distribuição, serviços e
+ausência de hardware. A execução no Ubuntu físico continua pendente.
+
+### Base 0.1.0 preservada
+
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
 ```

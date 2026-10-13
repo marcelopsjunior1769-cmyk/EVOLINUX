@@ -10,6 +10,30 @@ from evolinux import cli
 
 
 class CliTests(unittest.TestCase):
+    def test_doctor_defaults_to_metadata_only(self):
+        with patch("evolinux.health.check_environment") as check, contextlib.redirect_stdout(io.StringIO()):
+            check.return_value = {"status": "ready", "software_prerequisites": "ready"}
+            self.assertEqual(cli.main(["doctor", "--json"]), 0)
+        check.assert_called_once_with(include_controls=False)
+
+    def test_doctor_reads_controls_only_when_explicitly_requested(self):
+        with patch("evolinux.health.check_environment") as check, contextlib.redirect_stdout(io.StringIO()):
+            check.return_value = {"status": "warnings", "software_prerequisites": "ready"}
+            self.assertEqual(cli.main(["doctor", "--json", "--controls"]), 2)
+        check.assert_called_once_with(include_controls=True)
+
+    def test_selected_control_is_passed_to_native_backend(self):
+        with patch.object(cli, "NativeAlsaBackend") as backend, contextlib.redirect_stdout(io.StringIO()):
+            backend.return_value.snapshot.return_value = {"status": "found", "cards": [], "errors": []}
+            self.assertEqual(cli.main(["status", "--card", "3", "--control", "7", "--json"]), 0)
+        backend.return_value.snapshot.assert_called_once_with(card_number=3, numid=7)
+
+    def test_control_without_card_is_refused_before_discovery(self):
+        with patch.object(cli, "NativeAlsaBackend") as backend, contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                cli.main(["status", "--control", "7"])
+        backend.assert_not_called()
+
     def test_help_does_not_open_audio_controls(self):
         with patch.object(cli, "NativeAlsaBackend") as backend, contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(cli.main([]), 0)

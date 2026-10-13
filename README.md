@@ -12,16 +12,24 @@ da Audient nem uma versão convertida do instalador Windows.
 
 ## Instalação e primeira leitura
 
-Na pasta do checkout, com Ubuntu 24.04.4:
+Com os fontes disponíveis no seu Ubuntu 24.04.4, entre na pasta do projeto:
 
 ```bash
 sudo apt update
 sudo apt install python3 python3-venv libasound2t64
-python3 -m venv .venv
-.venv/bin/python -m pip install -e .
-.venv/bin/evolinux status --json
+bash tools/install-ubuntu.sh --check
+bash tools/install-ubuntu.sh
+"$HOME/.local/bin/evolinux" doctor --json
 ```
 
+O instalador cria uma versão isolada por usuário e preserva instalações
+anteriores; não precisa de sudo, Wine, interface gráfica ou módulo de kernel.
+O comando `doctor` verifica pré-requisitos, kernel, metadados da EVO e estado
+de PipeWire/WirePlumber. Por padrão, não abre controles ALSA/PCM nem envia
+comandos USB. Veja [o instalador](docs/ubuntu-installer.md) e
+[o primeiro teste no Ubuntu](docs/first-test.md).
+
+Para ler os controles, execute `"$HOME/.local/bin/evolinux" status --json`.
 `status` usa somente a API de controles ALSA. Não abre dispositivos PCM, reinicia
 PipeWire, reivindica interfaces USB ou carrega o módulo experimental. Sem a EVO,
 o resultado registra ausência ou indisponibilidade, em vez de mostrar valores
@@ -37,8 +45,11 @@ Leia as [instruções completas](docs/installation.md) e os
 ## Componentes implementados
 
 - Descoberta da EVO 16 por `/proc/asound` e metadados do mixer do kernel.
+- Instalação por usuário com atualização que preserva versões anteriores.
+- Diagnóstico de pré-requisitos e serviços sem abrir controles por padrão.
 - Backend ALSA CTL para ler controles das unidades 11, 60 e 61 quando expostos
   pelo driver, sem converter valores brutos em dB inventados.
+- Seleção de placa/numid na leitura para limitar o acesso ao controle escolhido.
 - Caminho de ajuste explícito de ganho/fase FU11, com autorização por operação,
   validação de identidade, tipo, faixa, passo e canal. **Ainda não testado no
   hardware; escritas não acontecem no fluxo padrão.**
@@ -61,7 +72,7 @@ Não há implementação de atualização de firmware.
 ## Diagnóstico sem enviar comandos USB
 
 ```bash
-.venv/bin/evolinux collect --output evo16-diagnostics.json
+"$HOME/.local/bin/evolinux" collect --output evo16-diagnostics.json
 ```
 
 O coletor lê arquivos que o kernel já expõe. O módulo e o utilitário
@@ -72,10 +83,14 @@ usa a EVO real.
 ## Desenvolvimento e testes
 
 ```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e .
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-Sem instalação, use `PYTHONPATH=src python3 -m unittest discover -s tests -v`.
+Para desenvolvimento, crie `.venv` com `python3 -m venv .venv` e instale o
+checkout com `.venv/bin/python -m pip install -e .`. Sem instalação, use
+`PYTHONPATH=src python3 -m unittest discover -s tests -v`.
 As instruções de contribuição e de publicação ficam em
 [CONTRIBUTING.md](CONTRIBUTING.md).
 

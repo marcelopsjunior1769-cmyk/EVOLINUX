@@ -7,7 +7,10 @@ com a interface física nesta sessão.
 | Componente/capacidade | Código atual | Validação realizada | Pendência |
 | --- | --- | --- | --- |
 | Descoberta de placas EVO 16 no ALSA | Implementado | Fixtures e erros de descoberta | Inventário real no Ubuntu |
+| Instalador por usuário para terminal | Implementado, sem apt/sudo automático | Instalação isolada e falhas simuladas | Execução no Ubuntu físico |
+| Diagnóstico `doctor` | Implementado; padrão apenas metadados | Pré-requisitos, serviços e privacidade simulados | Relatório do Ubuntu do usuário |
 | Leitura ALSA das unidades 11/60/61 | Implementado para controles mapeados | Testes de binding e transporte simulado | Controles efetivamente expostos pelo driver |
+| Leitura restrita a placa/controle | Implementado com `status --card --control` | Recusa de seleções inválidas e ausência de leituras em outros controles | Numids do firmware do usuário |
 | Ganho/fase FU11 pelo ALSA | Caminho de ajuste explícito com limites | Testes simulados; padrão sem escrita | Correspondência física e teste autorizado |
 | Matrizes 60/61 | Leitura quando expostas; escrita bloqueada | Topologia analisada, testes de metadados | Mapear entradas/saídas e validar valores |
 | Coletor sysfs | Implementado | Fixtures, privacidade e preservação de arquivos | Relatório completo do hardware |
