@@ -1,5 +1,12 @@
 # EVOLINUX — Audient EVO 16 no Ubuntu
 
+**Recuperação em 25/10/2026:** os fontes disponíveis foram restaurados do
+backup **0.3.1**, preservando seus commits. A GUI e as alterações 0.5.x descritas
+anteriormente na conversa não estão nesta cópia. Consulte o
+[relatório de recuperação](docs/recovery-2026-10-25.md) antes de seguir as
+instruções históricas abaixo. Os comandos antigos de leitura de valores podem
+consultar INFO; esta recuperação foi validada somente sem hardware.
+
 Controlador nativo experimental para a **Audient EVO 16**, com prioridade para
 ALSA e convivência com PipeWire. Alvo: **Ubuntu 24.04.4 LTS**. O dispositivo
 identificado é `2708:000a`; o kernel informado para desenvolvimento é
